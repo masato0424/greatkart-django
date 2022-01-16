@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.deletion import PROTECT
 from category.models import Category
 from django.utils.text import slugify
 from django.urls import reverse
@@ -28,4 +29,27 @@ class Product(models.Model):
     def save(self, *args, **kwargs): 
         self.slug = slugify(self.product_name)
         super().save(*args, **kwargs)
+
+class VariationManager(models.Manager):
+    def colors(self):
+        return super(VariationManager, self).filter(variation_category='color', is_active=True)
+    def sizes(self):
+        return super(VariationManager, self).filter(variation_category='size', is_active=True)
+
+variation_category_choice = (
+    ('color', 'color'),
+    ('size', 'size'),
+)
+
+class Variation(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variation_category = models.CharField(max_length=100, choices=variation_category_choice)
+    variation_value = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_date = models.DateTimeField(auto_now=True)
+
+    objects = VariationManager()
+    
+    def __str__(self):
+        return self.variation_value
     
